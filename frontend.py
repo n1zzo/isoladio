@@ -26,7 +26,7 @@ def download_song(url):
     }
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
-        filename = ydl.prepare_filename(info)
+        filename = ydl.prepare_filename(info).replace("mp4", "ogg")
         ydl.download([url])
     return filename
 
@@ -48,6 +48,8 @@ def enqueue():
     sql = ''' INSERT INTO suggestions(path, url, suggester, suggested_on)
               VALUES(?,?,?,?) '''
     cursor.execute(sql, suggestion)
+    connection.commit()
+    connection.close()
     return redirect("/")
 
 def main():
