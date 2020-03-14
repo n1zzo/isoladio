@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
 from flask import Flask, render_template, request, redirect
+from fetch import connect
+from os.path import abspath
+from datetime import datetime
 import youtube_dl
 import argparse
 
@@ -11,6 +14,7 @@ app = Flask(__name__,
 
 
 def download_song(url):
+    filename = ""
     ydl_opts = {
         'extractaudio': True,
         'postprocessors': [{
@@ -21,7 +25,10 @@ def download_song(url):
         }],
     }
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+        filename = ydl.prepare_filename(info)
         ydl.download([url])
+    return filename
 
 @app.route("/")
 def root():
@@ -29,7 +36,18 @@ def root():
 
 @app.route('/enqueue', methods=['POST'])
 def enqueue():
-    download_song(request.form['youtubedl'])
+    url = request.form['youtubedl']
+    path = download_song(url)
+    connection, cursor = connect()
+    suggestion = [
+        abspath(path),
+        url,
+        "anonymous",
+        int(datetime.now().timestamp())
+    ]
+    sql = ''' INSERT INTO suggestions(path, url, suggester, suggested_on)
+              VALUES(?,?,?,?) '''
+    cursor.execute(sql, suggestion)
     return redirect("/")
 
 def main():
