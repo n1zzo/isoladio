@@ -10,6 +10,7 @@ database_path = ""
 dry_run = False
 
 def connect():
+    assert database_path
     connection = sqlite3.connect(database_path)
     cursor = connection.cursor()
     cursor.execute("CREATE TABLE IF NOT EXISTS suggestions(id INTEGER NOT NULL PRIMARY KEY, path TEXT, url TEXT, suggester TEXT, played_on INTEGER, suggested_on INTEGER)")
@@ -43,7 +44,7 @@ def fetch():
 def main():
     parser = argparse.ArgumentParser(description="Fetch next song to play.")
     parser.add_argument("--dry-run", action="store_true", help="Do not mark the song as played. Use this for testing purposes.")
-    parser.add_argument("--db", default="/tmp/remindmail.db", help="Sqlite database to employ.")
+    parser.add_argument("--db", default="suggestions.db", help="Sqlite database to employ.")
     args = parser.parse_args()
 
     global dry_run
