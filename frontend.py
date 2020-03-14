@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
-import fetch
-from flask import Flask, render_template, request, redirect
-from os.path import abspath
 from datetime import datetime
-import youtube_dl
-import argparse
+from fetch import connect
+from flask import Flask, render_template, request, redirect
+from os.path import abspath, splitext
 from werkzeug.middleware.proxy_fix import ProxyFix
+import argparse
+import fetch
+import youtube_dl
 
 app = Flask(__name__,
             static_url_path='',
@@ -27,13 +28,16 @@ def download_song(url):
     }
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
-        filename = ydl.prepare_filename(info).replace("mp4", "ogg")
+        filename = ydl.prepare_filename(info)
+        filename = splitext(filename)[0]+".ogg"
         ydl.download([url])
     return filename
 
 @app.route("/")
 def root():
-    return render_template('index.html')
+    queue = ["Rick Astley - Never Gonna Give You Up",
+                  "Dua Lipa - New Rules"]
+    return render_template('index.html', queue=queue)
 
 @app.route('/enqueue', methods=['POST'])
 def enqueue():
