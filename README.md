@@ -1,9 +1,10 @@
 # Setting up the web interface
 
 ```
-apt install python3-pip ffmpeg
+apt install python3-pip ffmpeg espeak-ng
 pip3 install --user youtube_dl
 pip3 install --user flask
+pip3 install --user ffmpeg-python
 ./frontend.py --host 127.0.0.1 --port 8001 --db suggestions.db
 ```
 

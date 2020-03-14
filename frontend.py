@@ -10,11 +10,31 @@ import argparse
 import fetch
 import youtube_dl
 
+import shutil
+import os
+import ffmpeg
+import tempfile
+from shutil import which
+import subprocess
+
+espeak = which("espeak-ng") or which("espeak")
+assert espeak
+
 app = Flask(__name__,
             static_url_path='',
             template_folder="www",
             static_folder="www")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_prefix=1)
+
+def say_over(message, base_path):
+    output = tempfile.NamedTemporaryFile(suffix=".ogg", delete=False)
+    with tempfile.NamedTemporaryFile() as temporary:
+        subprocess.check_call([espeak, "-v", "it", "-w", temporary.name, message])
+        speech = ffmpeg.input(temporary.name).filter('volume', 10)
+        base = ffmpeg.input(base_path)
+        merged_audio = ffmpeg.filter([base, speech], 'amix')
+        ffmpeg.overwrite_output(merged_audio.output(output.name)).run()
+    return output.name
 
 def download_song(url):
     filename = ""
@@ -32,6 +52,11 @@ def download_song(url):
         filename = ydl.prepare_filename(info)
         filename = splitext(filename)[0]+".ogg"
         ydl.download([url])
+
+    with_speech = say_over("Questo pezzo vi è offerto da Asdinare", filename)
+    os.unlink(filename)
+    shutil.move(with_speech, filename)
+
     return filename
 
 @app.route("/")
