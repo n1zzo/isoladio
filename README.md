@@ -1,8 +1,9 @@
 # Setting up the web interface
 
 ```
-apt install python3-pip python3-flask
+apt install python3-pip ffmpeg
 pip3 install --user youtube_dl
+pip3 install --user flask
 ./frontend.py --host 127.0.0.1 --port 8001
 ```
 

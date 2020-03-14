@@ -6,12 +6,13 @@ from os.path import abspath
 from datetime import datetime
 import youtube_dl
 import argparse
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__,
             static_url_path='',
             template_folder="www",
             static_folder="www")
-
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_prefix=1)
 
 def download_song(url):
     filename = ""
