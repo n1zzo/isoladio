@@ -5,6 +5,7 @@ from fetch import connect
 from flask import Flask, render_template, request, redirect, url_for
 from os.path import abspath, splitext
 from werkzeug.middleware.proxy_fix import ProxyFix
+import re
 import argparse
 import fetch
 import youtube_dl
@@ -35,8 +36,11 @@ def download_song(url):
 
 @app.route("/")
 def root():
-    queue = ["Rick Astley - Never Gonna Give You Up",
-                  "Dua Lipa - New Rules"]
+    connection, cursor = connect()
+    now = int(datetime.now().timestamp())
+    results = list(cursor.execute("SELECT path FROM suggestions WHERE played_on IS NULL ORDER BY suggested_on ASC"))
+    name_pattern = r'.*/(.*)-[^-]*$'
+    queue = map(lambda x: re.search(name_pattern, x[0]).group(1), results)
     return render_template('index.html', queue=queue)
 
 @app.route('/enqueue', methods=['POST'])

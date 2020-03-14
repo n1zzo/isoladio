@@ -31,10 +31,9 @@
     <input type="submit" value="ENQUEUE">
     </form>
     <div id="queue">
-        <marquee behavior="scroll" direction="left">
-        Rick Astley - Never Gonna Give You Up
-        </marquee>
-
+    {% for song in queue %}
+    <marquee behavior="scroll" direction="left">{{ song }}</marquee>
+    {% endfor %}
     </div>
   </div>
   <script src="js/vendor/modernizr-3.8.0.min.js"></script>
