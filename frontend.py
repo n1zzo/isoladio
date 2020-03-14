@@ -17,6 +17,11 @@ import tempfile
 from shutil import which
 import subprocess
 
+from urllib.parse import urlparse
+
+max_duration = 0
+safe_categories = set()
+
 espeak = which("espeak-ng") or which("espeak")
 assert espeak
 
@@ -49,6 +54,16 @@ def download_song(url):
     }
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
+
+        # Prevent too long submissions
+        if info["duration"] > max_duration:
+            return None
+
+        # If safe-categories are active, enforce them
+        if (safe_categories
+            and not (set(map(str.lower, info["categories"])) & safe_categories)):
+            return None
+
         filename = ydl.prepare_filename(info)
         filename = splitext(filename)[0]+".ogg"
         ydl.download([url])
@@ -73,9 +88,14 @@ def enqueue():
     url = request.form['youtubedl']
     submitter = request.form['submitter']
     submitter = "anonymous" if submitter == "" else submitter
-    if url == "":
+    if url == "" or urlparse(url).netloc not in ["youtube.com", "www.youtube.com"]:
         return redirect(url_for("root"))
+
     path = download_song(url)
+
+    if not path:
+        return redirect(url_for("root"))
+
     connection, cursor = fetch.connect()
     suggestion = [
         abspath(path),
@@ -96,9 +116,18 @@ def main():
     parser.add_argument("--host", default="localhost", help="Host to listen to.")
     parser.add_argument("--port", default=5000, type=int, help="Port to listen to.")
     parser.add_argument("--db", default="suggestions.db", help="Sqlite database to employ.")
+    parser.add_argument("--safe-categories", default="", help="Sqlite database to employ.")
+    parser.add_argument("--max-duration", default=(60 * 7), help="Maximum duration of the track to enqueue.")
     args = parser.parse_args()
 
     fetch.database_path = args.db
+
+    global max_duration
+    max_duration = args.max_duration
+
+    global safe_categories
+    if args.safe_categories:
+        safe_categories = set(map(str.lower, args.safe_categories.split(",")))
 
     app.run(host=args.host, port=args.port)
 
