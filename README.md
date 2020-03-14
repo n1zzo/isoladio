@@ -4,7 +4,7 @@
 apt install python3-pip ffmpeg
 pip3 install --user youtube_dl
 pip3 install --user flask
-./frontend.py --host 127.0.0.1 --port 8001
+./frontend.py --host 127.0.0.1 --port 8001 --db suggestions.db
 ```
 
 # How to install
@@ -42,6 +42,7 @@ location /isoladio/ {
   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
   proxy_set_header X-Scheme $scheme;
   proxy_set_header X-Script-Name /isoladio;
+  proxy_set_header X-Forwarded-Prefix /isoladio;
 }
 
 location /icecast/ {

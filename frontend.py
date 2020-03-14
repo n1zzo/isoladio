@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from fetch import connect
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, url_for
 from os.path import abspath, splitext
 from werkzeug.middleware.proxy_fix import ProxyFix
 import argparse
@@ -56,7 +56,7 @@ def enqueue():
     connection.commit()
     connection.close()
 
-    return redirect("/")
+    return redirect(url_for("root"))
 
 def main():
     parser = argparse.ArgumentParser(description="Run the web frontend.")
