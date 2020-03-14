@@ -46,6 +46,8 @@ def root():
 @app.route('/enqueue', methods=['POST'])
 def enqueue():
     url = request.form['youtubedl']
+    if url == "":
+        return redirect(url_for("root"))
     path = download_song(url)
     connection, cursor = fetch.connect()
     suggestion = [
