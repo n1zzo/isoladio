@@ -31,6 +31,14 @@ app = Flask(__name__,
             static_folder="www")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_prefix=1)
 
+def is_ascii(value):
+    try:
+        value.encode('ascii')
+    except UnicodeDecodeError:
+        return False
+    else:
+        return True
+
 def say_over(message, base_path):
     output = tempfile.NamedTemporaryFile(suffix=".ogg", delete=False)
     with tempfile.NamedTemporaryFile() as temporary:
@@ -41,7 +49,7 @@ def say_over(message, base_path):
         ffmpeg.overwrite_output(merged_audio.output(output.name)).run()
     return output.name
 
-def download_song(url):
+def download_song(url, submitter):
     filename = ""
     ydl_opts = {
         'extractaudio': True,
@@ -68,7 +76,7 @@ def download_song(url):
         filename = splitext(filename)[0]+".ogg"
         ydl.download([url])
 
-    with_speech = say_over("Questo pezzo vi è offerto da Asdinare", filename)
+    with_speech = say_over("Questo pezzo vi è offerto da " + submitter, filename)
     os.unlink(filename)
     shutil.move(with_speech, filename)
 
@@ -86,12 +94,19 @@ def root():
 @app.route('/enqueue', methods=['POST'])
 def enqueue():
     url = request.form['youtubedl']
+
     submitter = request.form['submitter']
-    submitter = "anonymous" if submitter == "" else submitter
+    submitter = ("anonymous"
+                 if (not submitter
+                     or len(submitter) > 15
+                     or not is_ascii(submitter)
+                     or not submitter.isalnum())
+                 else submitter)
+
     if url == "" or urlparse(url).netloc not in ["youtube.com", "www.youtube.com"]:
         return redirect(url_for("root"))
 
-    path = download_song(url)
+    path = download_song(url, submitter)
 
     if not path:
         return redirect(url_for("root"))
