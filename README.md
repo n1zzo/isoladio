@@ -3,7 +3,7 @@
 ```
 apt install python3-pip python3-flask
 pip3 install --user youtube_dl
-./frontend.py --host 127.0.0.1 --port 5000
+./frontend.py --host 127.0.0.1 --port 8001
 ```
 
 # How to install
@@ -31,3 +31,23 @@ ices2 ices2-config.xml
 ```
 
 You stream should now be available.
+
+# nginx configuration
+
+```
+location /isoladio/ {
+  proxy_pass http://127.0.0.1:8001/;
+  proxy_set_header Host $host;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Scheme $scheme;
+  proxy_set_header X-Script-Name /isoladio;
+}
+
+location /icecast/ {
+  proxy_pass http://127.0.0.1:8000/;
+  proxy_set_header Host $host;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Scheme $scheme;
+  proxy_set_header X-Script-Name /icecast;
+}
+```
