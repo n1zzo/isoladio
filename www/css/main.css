@@ -50,6 +50,15 @@ body {
   margin: auto;
 }
 
+audio.player{
+    margin-bottom: 0.8em;
+}
+
+p.form-text {
+    margin-top: 0em;
+    margin-bottom: 0.4em;
+}
+
 input[type=text], select {
 	color: #000;
     padding: 12px 20px;
@@ -59,7 +68,8 @@ input[type=text], select {
 	border-color: #000;
 	border-width: medium;
 	width: 80%;
-    margin-bottom:1em;
+    margin-top: 0em;
+    margin-bottom: 0.8em;
 }
 
 input[type=submit], select {
@@ -71,7 +81,8 @@ input[type=submit], select {
 	border-color: #000;
 	border-width: medium;
 	width: 96%;
-    margin-bottom:1em;
+    margin-top: 0em;
+    margin-bottom: 0.8em;
 }
 
 #queue {
@@ -84,7 +95,7 @@ input[type=submit], select {
 
   padding: 12px 20px; 
   width: 80%;
-  height: 59%;
+  height: 41%;
   text-align: left;
   margin: auto;
 }

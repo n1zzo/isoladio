@@ -25,9 +25,11 @@
   <!-- Add your site or application content here -->
   <div id="roundbox">
     <h1>ISOLADIO</h1>
-    <audio controls preload="none" src="/icecast/mymount.ogg"></audio>
-    <p>PUT YOUR YOUTUBE URL HERE</p>
+    <audio controls class="player" preload="none" src="/icecast/mymount.ogg"></audio>
     <form action="{{ url_for('enqueue') }}" method="post">
+    <p class="form-text">PUT YOUR NAME HERE</p>
+    <input type="text" id="youtubedl-form" name="submitter"><br>
+    <p class="form-text">PUT YOUR YOUTUBE URL HERE</p>
     <input type="text" id="youtubedl-form" name="youtubedl"><br>
     <input type="submit" value="ENQUEUE">
     </form>

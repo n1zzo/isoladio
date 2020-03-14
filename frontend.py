@@ -71,6 +71,8 @@ def root():
 @app.route('/enqueue', methods=['POST'])
 def enqueue():
     url = request.form['youtubedl']
+    submitter = request.form['submitter']
+    submitter = "anonymous" if submitter == "" else submitter
     if url == "":
         return redirect(url_for("root"))
     path = download_song(url)
@@ -78,7 +80,7 @@ def enqueue():
     suggestion = [
         abspath(path),
         url,
-        "anonymous",
+        submitter,
         int(datetime.now().timestamp())
     ]
     sql = ''' INSERT INTO suggestions(path, url, suggester, suggested_on)
