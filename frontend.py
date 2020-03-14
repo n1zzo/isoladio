@@ -2,6 +2,7 @@
 
 from flask import Flask, render_template, request, redirect
 import youtube_dl
+import argparse
 
 app = Flask(__name__,
             static_url_path='',
@@ -23,14 +24,21 @@ def download_song(url):
         ydl.download([url])
 
 @app.route("/")
-def main():
+def root():
     return render_template('index.html')
 
 @app.route('/enqueue', methods=['POST'])
 def enqueue():
     download_song(request.form['youtubedl'])
     return redirect("/")
-#    return render_template('index.html')
- 
+
+def main():
+    parser = argparse.ArgumentParser(description="Run the web frontend.")
+    parser.add_argument("--host", default="localhost", help="Host to listen to.")
+    parser.add_argument("--port", default=5000, type=int, help="Port to listen to.")
+    args = parser.parse_args()
+
+    app.run(host=args.host, port=args.port)
+
 if __name__ == "__main__":
-    app.run()
+    main()
