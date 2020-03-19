@@ -1,0 +1,36 @@
+#!/bin/bash
+
+set -e
+
+function log() {
+    echo "$1" > /dev/stderr
+}
+
+DB_PATH="$1"
+SEARCH_QUERY="$2"
+
+if test -z "$DB_PATH" || test -z "$SEARCH_QUERY"; then
+    log "Usage: $0 DB_PATH SEARCH_QUERY"
+    exit 1
+fi
+
+if ! test -e "$DB_PATH"; then
+   log "The provided DB files does not exist"
+   exit 1
+fi
+
+function sql() {
+    sqlite3 "$DB_PATH" <<< "$1";
+}
+
+sql " \
+SELECT files.*, torrents.* \
+    FROM files_fts \
+    JOIN files \
+         ON files_fts.infohash = files.infohash \
+         AND files_fts.index_ = files.index_ \
+    JOIN torrents \
+         ON files.infohash = torrents.infohash \
+    WHERE files_fts MATCH '$SEARCH_QUERY' \
+    ORDER BY rank; \
+"

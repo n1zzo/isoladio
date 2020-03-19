@@ -1,0 +1,62 @@
+#!/bin/bash
+
+set -e
+
+function log() {
+    echo "$1" > /dev/stderr
+}
+
+DB_PATH="$1"
+REPO_PATH="$2"
+
+if test -z "$DB_PATH" || test -z "$REPO_PATH"; then
+    log "Usage: $0 DB_PATH REPO_PATH"
+    exit 1
+fi
+
+REPO_NAME=$(echo dG9ycmVudHMuY3N2Cg== | base64 -d)
+REPO_URL=$(echo aHR0cHM6Ly9naXRsYWIuY29tL2Rlc3NhbGluZXMvdG9ycmVudHMuY3N2LmdpdA== | base64 -d)
+
+if test -e "$REPO_PATH/.git"; then
+    log "Updating the repo"
+    git -C "$REPO_PATH" pull
+else
+    log "Cloning the repo"
+    git clone "$REPO_URL" "$REPO_PATH"
+fi
+
+function sql() {
+    sqlite3 "$DB_PATH" <<< "$1";
+}
+
+if test -e "$DB_PATH"; then
+    log "Cleaning up the existing DB"
+    sql "DROP TABLE IF EXISTS files_fts";
+    sql "DROP TABLE IF EXISTS files";
+    sql "DROP TABLE IF EXISTS torrents";
+fi
+
+log "Populating the DB"
+pushd "$REPO_PATH/scripts" > /dev/null
+TORRENTS_CSV_DB_FILE="$DB_PATH" ./build_sqlite.sh -f
+popd > /dev/null
+
+log "Check if the DB exists"
+test -e "$DB_PATH"
+
+log "Drop all non-mp3s"
+sql 'DELETE FROM files WHERE NOT path LIKE "%.mp3";'
+
+log "Create FTS index"
+sql "CREATE VIRTUAL TABLE files_fts USING fts5(infohash UNINDEXED, index_ UNINDEXED, path);"
+
+log "Populate FTS index"
+sql "INSERT INTO files_fts SELECT infohash, index_, path FROM files;"
+
+log "Create index for the files table"
+sql 'CREATE UNIQUE INDEX files_index ON files(infohash, index_);'
+
+log "Create index for the torrents table"
+sql 'CREATE UNIQUE INDEX torrents_index ON torrents(infohash);'
+
+ls -lh "$DB_PATH"
