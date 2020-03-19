@@ -1,7 +1,7 @@
 # Setting up the web interface
 
 ```
-apt install python3-pip ffmpeg espeak-ng
+apt install python3-pip ffmpeg espeak-ng sqlite3 icecast2 ices2
 pip3 install --user youtube_dl
 pip3 install --user flask
 pip3 install --user ffmpeg-python
