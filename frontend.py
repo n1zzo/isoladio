@@ -103,7 +103,10 @@ def enqueue():
                      or not submitter.isalnum())
                  else submitter)
 
-    if url == "" or urlparse(url).netloc not in ["youtube.com", "www.youtube.com"]:
+    if (not url
+        or urlparse(url).netloc not in ["youtube.com",
+                                        "www.youtube.com",
+                                        "youtu.be"]):
         return redirect(url_for("root"))
 
     path = download_song(url, submitter)
