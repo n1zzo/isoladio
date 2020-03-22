@@ -23,17 +23,16 @@
   <![endif]-->
 
   <!-- Add your site or application content here -->
-  <div id="roundbox">
+  <div id="roundbox" onclick=reduce()>
     <h1>ISOLADIO</h1>
     <audio controls class="player" preload="none" src="/icecast/mymount.ogg"></audio>
-    <form action="{{ url_for('enqueue') }}" method="post">
-    <p class="form-text">PUT YOUR NAME HERE</p>
-    <input type="text" id="youtubedl-form" name="submitter"><br>
-    <p class="form-text">PUT YOUR YOUTUBE URL HERE</p>
-    <input type="text" id="youtubedl-form" name="youtubedl"><br>
-    <input type="submit" value="ENQUEUE">
-    </form>
-    <div id="queue">
+    <p class="form-text">YOUR NAME</p>
+    <input type="text" class="pretty-input" id="name-form" name="submitter"><br>
+    <p class="form-text">SONG OR ARTIST</p>
+    <input type="text" class="pretty-input" id="search-form" name="search-form" onclick=searchMode()><br>
+    <div id="results" class="results"></div>
+    <button class="black-button">ENQUEUE</button>
+    <div id="queue" class="queue">
     {% for song in queue %}
     <marquee behavior="scroll" direction="left">{{ song }}</marquee>
     {% endfor %}

@@ -2,22 +2,20 @@
 
 from datetime import datetime
 from fetch import connect
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 from os.path import abspath, splitext
+from shutil import which
+from urllib.parse import urlparse
 from werkzeug.middleware.proxy_fix import ProxyFix
-import re
 import argparse
 import fetch
-import youtube_dl
-
-import shutil
-import os
 import ffmpeg
-import tempfile
-from shutil import which
+import os
+import re
+import shutil
 import subprocess
-
-from urllib.parse import urlparse
+import tempfile
+import youtube_dl
 
 max_duration = 0
 safe_categories = set()
@@ -31,6 +29,7 @@ app = Flask(__name__,
             static_folder="www")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_prefix=1)
 
+
 def is_ascii(value):
     try:
         value.encode('ascii')
@@ -39,15 +38,19 @@ def is_ascii(value):
     else:
         return True
 
+
 def say_over(message, base_path):
     output = tempfile.NamedTemporaryFile(suffix=".ogg", delete=False)
     with tempfile.NamedTemporaryFile() as temporary:
-        subprocess.check_call([espeak, "-v", "it", "-w", temporary.name, message])
+        subprocess.check_call([espeak,
+                               "-v", "it", "-w",
+                               temporary.name, message])
         speech = ffmpeg.input(temporary.name).filter('volume', 10)
         base = ffmpeg.input(base_path)
         merged_audio = ffmpeg.filter([base, speech], 'amix')
         ffmpeg.overwrite_output(merged_audio.output(output.name)).run()
     return output.name
+
 
 def download_song(url, submitter):
     filename = ""
@@ -68,28 +71,54 @@ def download_song(url, submitter):
             return None
 
         # If safe-categories are active, enforce them
-        if (safe_categories
-            and not (set(map(str.lower, info["categories"])) & safe_categories)):
+        if (safe_categories and not
+                (set(map(str.lower, info["categories"])) & safe_categories)):
             return None
 
         filename = ydl.prepare_filename(info)
         filename = splitext(filename)[0]+".ogg"
         ydl.download([url])
 
-    with_speech = say_over("Questo pezzo vi è offerto da " + submitter, filename)
+    with_speech = say_over("Questo pezzo vi è offerto da " + submitter,
+                           filename)
     os.unlink(filename)
     shutil.move(with_speech, filename)
 
     return filename
 
+
 @app.route("/")
 def root():
     connection, cursor = connect()
-    now = int(datetime.now().timestamp())
-    results = list(cursor.execute("SELECT path FROM suggestions WHERE played_on IS NULL ORDER BY suggested_on ASC"))
+    results = list(cursor.execute(
+        "SELECT path "
+        "FROM suggestions "
+        "WHERE played_on IS NULL "
+        "ORDER BY suggested_on ASC"))
     name_pattern = r'.*/(.*)-[^-]*$'
     queue = map(lambda x: re.search(name_pattern, x[0]).group(1), results)
     return render_template('index.html', queue=queue)
+
+
+@app.route('/search', methods=['GET'])
+def search():
+    connection, cursor = fetch.connect()
+    query = request.args["query"]
+    results = list(cursor.execute(
+        "SELECT files.*, torrents.* "
+        "FROM files_fts "
+        "JOIN files "
+        "     ON files_fts.infohash = files.infohash "
+        "     AND files_fts.index_ = files.index_ "
+        "JOIN torrents "
+        "     ON files.infohash = torrents.infohash "
+        "WHERE files_fts MATCH '?' "
+        "ORDER BY rank; ",
+        query
+    ))
+    print(results)
+    return jsonify({"status": "success"})
+
 
 @app.route('/enqueue', methods=['POST'])
 def enqueue():
@@ -129,13 +158,19 @@ def enqueue():
 
     return redirect(url_for("root"))
 
+
 def main():
     parser = argparse.ArgumentParser(description="Run the web frontend.")
-    parser.add_argument("--host", default="localhost", help="Host to listen to.")
-    parser.add_argument("--port", default=5000, type=int, help="Port to listen to.")
-    parser.add_argument("--db", default="suggestions.db", help="Sqlite database to employ.")
-    parser.add_argument("--safe-categories", default="", help="Sqlite database to employ.")
-    parser.add_argument("--max-duration", default=(60 * 7), help="Maximum duration of the track to enqueue.")
+    parser.add_argument("--host", default="localhost",
+                        help="Host to listen to.")
+    parser.add_argument("--port", default=5000,
+                        type=int, help="Port to listen to.")
+    parser.add_argument("--db", default="suggestions.db",
+                        help="Sqlite database to employ.")
+    parser.add_argument("--safe-categories", default="",
+                        help="Sqlite database to employ.")
+    parser.add_argument("--max-duration", default=(60 * 7),
+                        help="Maximum duration of the track to enqueue.")
     args = parser.parse_args()
 
     fetch.database_path = args.db
@@ -147,7 +182,8 @@ def main():
     if args.safe_categories:
         safe_categories = set(map(str.lower, args.safe_categories.split(",")))
 
-    app.run(host=args.host, port=args.port)
+    app.run(host=args.host, port=args.port, debug=True)
+
 
 if __name__ == "__main__":
     main()
