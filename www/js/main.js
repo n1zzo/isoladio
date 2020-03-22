@@ -24,15 +24,15 @@ function startSearch() {
         data: {"submitter": submitter_str , "query":query_str},
         contentType: "application/json; charset=utf-8",
         dataType: "json",
-	success: (data) => { search_results = data["data"]; }
+	success: (data) => {
+		res = data["data"].slice(0, 20);
+    		$("#results").empty();
+    		$("#results").append("<ul>");
+        	res.forEach(el => {$("#results").append("<li>"+el["name"]+"</li>");});
+    		$("#results").append("</ul>");
+		search_results = res;
+	}
     });
-    $("#results").empty();
-    $("#results").append("<ul>");
-    search_results.forEach(el => {
-	console.log(el["name"]);
-        $("#results").append("<li>"+el["name"]+"</li>");
-    });
-    $("#results").append("</ul>");
 }
 
 function searchMode() {
