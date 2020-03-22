@@ -1,5 +1,6 @@
 var typingTimer;        
 var doneTypingInterval = 250; 
+var search_results = [];
 
 //on keyup, start the countdown
 $("#search-form").on('keyup', function () {
@@ -15,19 +16,23 @@ $("#search-form").on('keydown', function () {
 function startSearch() {
     var submitter_str = $("#name-form").val();
     var query_str = $("#search-form").val();
+    var base_url = window.location.origin+window.location.pathname;
     console.log("Searching..."+query_str);
-    $.ajax({
+    json_data = $.ajax({
         type: "GET",
-        url: "/search",
+        url: "search",
         data: {"submitter": submitter_str , "query":query_str},
         contentType: "application/json; charset=utf-8",
         dataType: "json",
-        success: function (data) {
-            $.each( data, function( key, val ) {
-                $("#results").append('<marquee behavior="scroll" direction="left">'+val+"</marquee>");
-            });
-        }
+	success: (data) => { search_results = data["data"]; }
     });
+    $("#results").empty();
+    $("#results").append("<ul>");
+    search_results.forEach(el => {
+	console.log(el["name"]);
+        $("#results").append("<li>"+el["name"]+"</li>");
+    });
+    $("#results").append("</ul>");
 }
 
 function searchMode() {

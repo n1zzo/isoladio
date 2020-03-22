@@ -104,20 +104,21 @@ def root():
 def search():
     connection, cursor = fetch.connect()
     query = request.args["query"]
+    app.logger.info(query)
     results = list(cursor.execute(
-        "SELECT files.*, torrents.* "
+        "SELECT torrents.name, files.infohash, files.index_ "
         "FROM files_fts "
         "JOIN files "
         "     ON files_fts.infohash = files.infohash "
         "     AND files_fts.index_ = files.index_ "
         "JOIN torrents "
         "     ON files.infohash = torrents.infohash "
-        "WHERE files_fts MATCH '?' "
+        "WHERE files_fts MATCH ? "
         "ORDER BY rank; ",
-        query
+        [query]
     ))
-    print(results)
-    return jsonify({"status": "success"})
+    results = map(lambda x: {"name":x[0], "infohash":x[1], "index":x[2]}, results)
+    return jsonify({"status": "success", "data":list(results)})
 
 
 @app.route('/enqueue', methods=['POST'])
